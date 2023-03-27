@@ -1,5 +1,10 @@
 "use client";
-const InputArea = ({ setInput, submitHandler, loading }: any) => {
+const InputArea = ({
+  setInput,
+  submitHandler,
+  loading,
+  setIsReachLimit,
+}: any) => {
   return (
     <div className="relative w-full mt-4">
       <input
@@ -9,6 +14,7 @@ const InputArea = ({ setInput, submitHandler, loading }: any) => {
         placeholder="Ask me anything..."
         onChange={(e) => {
           setInput(e.target.value);
+          setIsReachLimit(false);
         }}
       />
       <button

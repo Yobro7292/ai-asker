@@ -1,15 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import cookieCutter from "cookie-cutter";
 import InputArea from "./InputArea";
 import OutputArea from "./Outputarea";
+import NamePopup from "../Forms/NamePopup";
+import { decoding, encoding } from "@/common/token";
 
 const InputContainer = () => {
   const [output, setOutput] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [isReachLimit, setIsReachLimit] = useState(false);
+  const [isLocalFetching, setIsLocalFetching] = useState(false);
+  const [userData, setUserData] = useState<any>("");
+  const [userLimit, setUserLimit] = useState<number>(userData.API_limit);
   const submitHandler = async () => {
-    if (input !== "") {
+    if (input !== "" && userLimit !== 0) {
       setOutput("");
       setLoading(true);
       var myHeaders = new Headers();
@@ -51,22 +57,72 @@ const InputContainer = () => {
           setLoading(false);
           setInput("");
         });
+      const updatedToken = { ...userData, API_limit: userLimit - 1 };
+      const token = encoding(updatedToken);
+      cookieCutter.set("_AcuO3", token);
+      window.dispatchEvent(new Event("storage"));
+      console.log(updatedToken);
     }
+    if (userLimit === 0) setIsReachLimit(true);
   };
+
+  useEffect(() => {
+    setIsLocalFetching(true);
+    const listenStorageChange = () => {
+      if (typeof window !== "undefined") {
+        const token = cookieCutter.get("_AcuO3");
+        const data = decoding(token);
+        if (data) {
+          setUserData(data);
+          setUserLimit(data.API_limit);
+        }
+        setIsLocalFetching(false);
+      }
+    };
+    window.addEventListener("storage", listenStorageChange);
+    return () => window.removeEventListener("storage", listenStorageChange);
+  }, [userData]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = cookieCutter.get("_AcuO3");
+      const data = decoding(token);
+
+      if (data) {
+        setUserData(data);
+        setUserLimit(data.API_limit);
+      }
+    }
+  }, []);
+
   return (
-    <div className="flex flex-col justify-start items-start bg-gray-800 min-h-screen">
-      <p className="text-3xl text-white text-bold mt-4 ml-6">
-        AI Asker with GPT-3
-      </p>
-      <div className="w-full p-3 rounded bg-gray-800 flex flex-col justify-start items-center">
-        <OutputArea output={output} loading={loading} />
-        <InputArea
-          setInput={setInput}
-          submitHandler={submitHandler}
-          loading={loading}
-        />
+    <>
+      {!userData && isLocalFetching && <NamePopup />}
+      <div className="relative flex flex-col justify-start items-start bg-gray-800 min-h-screen">
+        <div className="w-full px-4 flex flex-col sm:flex-row justify-between items-center">
+          <p className="text-3xl text-white text-bold mt-4 ml-6 mb-4">
+            Hi, {userData.name}
+          </p>
+          <p className="text-3xl text-white text-bold mt-4 ml-6 mb-4">
+            Remaining Limit {userLimit}
+          </p>
+        </div>
+        <div className="w-full p-3 rounded bg-gray-800 flex flex-col justify-start items-center">
+          {isReachLimit && (
+            <p className="text-red-500 text-xl mb-4">
+              You reached your daily limit
+            </p>
+          )}
+          <OutputArea output={output} loading={loading} />
+          <InputArea
+            setInput={setInput}
+            submitHandler={submitHandler}
+            loading={loading}
+            setIsReachLimit={setIsReachLimit}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
