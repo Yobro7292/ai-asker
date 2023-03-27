@@ -5,6 +5,7 @@ import InputArea from "./InputArea";
 import OutputArea from "./Outputarea";
 import NamePopup from "../Forms/NamePopup";
 import { decoding, encoding } from "@/common/token";
+import Footer from "../Footer/Index";
 
 const InputContainer = () => {
   const [output, setOutput] = useState("");
@@ -121,6 +122,7 @@ const InputContainer = () => {
             setIsReachLimit={setIsReachLimit}
           />
         </div>
+        <Footer />
       </div>
     </>
   );

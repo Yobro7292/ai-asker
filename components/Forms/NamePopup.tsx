@@ -12,7 +12,7 @@ const NamePopup = () => {
       if (name) {
         const data = {
           name: name,
-          API_limit: 2,
+          API_limit: 5,
         };
         const token = encoding(data);
         cookieCutter.set("_AcuO3", token);
